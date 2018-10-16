@@ -4,7 +4,7 @@ Four different spectra are computed (see [1] for a complete description):
 - AMi spectrum: modulation index spectrum (see e.g. [3])
 - FM spectrum: Fourier FM spectrum (see e.g. [2]) 
 - f0M spectrum: Fourier spectrum of the modulations in f0 trajectory
-The computation of f0 modulation spectra requires the YIN toolbox developped by de Cheveigné & Kawahara (http://audition.ens.fr/adc/) [4].
+This toolbox uses the gammatone filterbank functions (https://github.com/LeoVarnet/Hohmann_Gammatone). The computation of f0 modulation spectra requires the YIN toolbox developped by de Cheveigné & Kawahara (http://audition.ens.fr/adc/) [4].
 
 refs:
 [1] A cross-linguistic study of speech modulation spectra. Varnet L, Ortiz-Barajas MC, Erra RG, Gervain J, Lorenzi C. J Acoust Soc Am. 2017 Oct;142(4):1976. doi: 10.1121/1.5006179.
