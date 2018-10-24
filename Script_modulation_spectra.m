@@ -35,7 +35,7 @@ flim_gammabank = [70 6700]; % gammatone range (Hz)
 flim_spectra = [0.1 500]; % modulation rate range for the AMa, FM and f0M spectra (Hz)
 flim_Eoct = [0.1 500]; % modulation rate range for the AMi spectrum (Hz)
 NthOct = 3; % width of modulation filters for the AMi spectrum (1/X octave filters) - determines the resolution of the AMi spectrum
-N_fsamples = 1000;%250; % number of (log-spaced) frequency samples for the AMa, FM and f0M spectra
+N_fsamples = 250; % number of (log-spaced) frequency samples for the AMa, FM and f0M spectra
 
 N_wav = length(D);
 fc = ERBlinspace( flim_gammabank(1), flim_gammabank(end), 1 );
@@ -181,7 +181,7 @@ end
 figure
 
 subplot(4,1,1)
-semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(E_spectrum(:,:,end),1),3))));hold on
+semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(E_spectrum,1),3))));hold on
 ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('AM spectra')
 
 subplot(4,1,2)
@@ -195,7 +195,3 @@ ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('FM spectra')
 subplot(4,1,4)
 semilogx(f_spectra, 10*log10(squeeze(nanmean(f0_spectrum,2))));hold on
 ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('f0 modulation spectra')
-
-%% saving
-
-%save('Mspectra', 'f_spectra', 'f_oct', 'E_spectrum', 'Eoct_spectrum', 'm_spectrum', 'FM_spectrum', 'f0_spectrum')
