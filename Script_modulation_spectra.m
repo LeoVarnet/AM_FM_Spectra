@@ -39,7 +39,7 @@ N_fsamples = 250; % number of (log-spaced) frequency samples for the AMa, FM and
 
 N_wav = length(D);
 fc = ERBlinspace( flim_gammabank(1), flim_gammabank(end), 1 );
-Nchan = length(fc);%30; % number of gammatones for the modulation spectra
+Nchan = length(fc); % number of gammatones for the modulation spectra
 f_spectra_intervals = logspace(log10(flim_spectra(1)), log10(flim_spectra(2)), N_fsamples+1);
 f_spectra = logspace(log10(sqrt(f_spectra_intervals(1)*f_spectra_intervals(2))), log10(sqrt(f_spectra_intervals(end)*f_spectra_intervals(end-1))), N_fsamples);
 
@@ -62,7 +62,7 @@ for i_wav=1:N_wav
     fprintf('sound loading\n');
     NameWav = D(i_wav).name;
     [son, fs] = audioread(NameWav);
-    %[son,fs]=wavread(NameWav);
+    %[son,fs] = wavread(NameWav);
     son = son/sqrt(mean(son.^2));
     Nsamples = length(son);
     
@@ -78,11 +78,8 @@ for i_wav=1:N_wav
     %% AM spectra
     
     fprintf('calculating envelope spectra\n');
-    %Nfft = 2^20;% 2^18;%
     for ichan=1:Nchan
         clear Efft
-%         [Efft,f] = periodogram(E(ichan,:),[],Nfft,fs); Efft=sqrt(Efft);
-%         E_spectrum(ichan,:,i_wav) = interpmean( f, Efft , f_spectra_intervals );
         [Efft, f] = periodogram(E(ichan,:),[],f_spectra,fs); Efft=sqrt(Efft);
         E_spectrum(ichan,:,i_wav) = Efft;
     end
