@@ -34,20 +34,22 @@ end
 
 % supress implausible values
 FM_withnan(FM_withnan<minf | FM_withnan>maxf )=NaN;
-[n,x]=hist(FM_withnan,50);
-[~,idxf0mode]=max(n);
-i=idxf0mode;
-while i<length(n) & n(i)>0
-    i=i+1;
-end
-maxfbis=x(i)+(x(2)-x(1));
-i=idxf0mode;
-while i>1 & n(i)>0
-    i=i-1;
-end
-minfbis=x(i)-(x(2)-x(1));
-FM_withnan(FM_withnan<minfbis | FM_withnan>maxfbis )=NaN;
 
+% [n,x]=hist(FM_withnan,50);
+% n = n(2:end-1); x = x(2:end-1);
+% [~,idxf0mode]=max(n);
+% i=idxf0mode;
+% while i<length(n) & n(i)>0
+%     i=i+1;
+% end
+% maxfbis=x(i)+(x(2)-x(1));
+% i=idxf0mode;
+% while i>1 & n(i)>0
+%     i=i-1;
+% end
+% minfbis=x(i)-(x(2)-x(1));
+% FM_withnan(FM_withnan<minfbis | FM_withnan>maxfbis )=NaN;
+% 
 
 end
 

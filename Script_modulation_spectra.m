@@ -36,6 +36,7 @@ flim_spectra = [0.1 500]; % modulation rate range for the AMa, FM and f0M spectr
 flim_Eoct = [0.1 500]; % modulation rate range for the AMi spectrum (Hz)
 NthOct = 3; % width of modulation filters for the AMi spectrum (1/X octave filters) - determines the resolution of the AMi spectrum
 N_fsamples = 250; % number of (log-spaced) frequency samples for the AMa, FM and f0M spectra
+undersample = 10; % undersampling for speeding up FM and f0M calculations
 
 N_wav = length(D);
 fc = ERBlinspace( flim_gammabank(1), flim_gammabank(end), 1 );
@@ -60,11 +61,19 @@ for i_wav=1:N_wav
     %% loading sound
     
     fprintf('sound loading\n');
-    NameWav = D(i_wav).name;
-    [son, fs] = audioread(NameWav);
+    NameWav{i_wav} = D(i_wav).name;
+    [son, fs] = audioread(NameWav{i_wav});
     %[son,fs] = wavread(NameWav);
-    son = son/sqrt(mean(son.^2));
+    rms(i_wav) = sqrt(mean(son.^2));
+    son = son/rms(i_wav);
     Nsamples = length(son);
+    t=(1:Nsamples)/fs;
+    
+    %% data_wav
+    
+    group{i_wav} = NameWav{i_wav}(1:2);
+    subject_ID(i_wav) = str2num(NameWav{i_wav}(3:4));
+    duration(i_wav) = t(end);
     
     %% gammatone filtering
     
@@ -102,8 +111,8 @@ for i_wav=1:N_wav
         for i=1:N_fsamples_oct
             clear F
             F = filter(Bmod(i,:), Amod(i,:), E(ichan,:));
-            Eoct_spectrum(ichan, i, i_wav) = rms(F)*sqrt(2);
-            m_spectrum(ichan, i, i_wav) = rms(F)*sqrt(2)/DC;
+            Eoct_spectrum(ichan, i, i_wav) = sqrt(mean(F.^2))*sqrt(2);
+            m_spectrum(ichan, i, i_wav) = sqrt(mean(F.^2))*sqrt(2)/DC;
         end
     end
     
@@ -113,8 +122,6 @@ for i_wav=1:N_wav
     
     fprintf('calculating FM spectra\n');
     
-    t=(1:Nsamples)/fs;
-    undersample = 1;
     for ichan=1:Nchan
         clear f_periodo FM_P
         FMwithoutnan=FM(ichan,1:undersample:end);FMwithoutnan(isnan(FMwithoutnan))=[];
@@ -138,20 +145,20 @@ for i_wav=1:N_wav
     
     % Parameters for the YIN algorithm
     ap0_thres = 0.6;
-    P=[]; P.hop = 1;P.sr = fs/undersample;
+    P=[]; P.hop = undersample;P.sr = fs;
     
     % Parameters for artifact removing in the f0 trajectory
     maxjump = 10;
     minduration = 0.02;
-    minf = 50;
-    maxf = 600;
+    minf = 60;
+    maxf = 550;
     
-    R = yin(son(1:undersample:end), P);
+    R = yin(son(:), P);%R = yin(son(1:undersample:end), P);
     f0 = 440*2.^(R.f0);
     f0_withnan = f0; 
     f0_withnan(R.ap0>ap0_thres)=NaN;
     
-    f0_withnan = remove_artifact_FM( f0_withnan, fs, maxjump, minduration, minf, maxf );
+    f0_withnan = remove_artifact_FM( f0_withnan, fs/undersample, maxjump, minduration, minf, maxf );
     
     clear P R f0
     
@@ -160,7 +167,8 @@ for i_wav=1:N_wav
     fprintf('calculating f0 modulation spectrum\n');
     
     f0withoutnan=f0_withnan;f0withoutnan(isnan(f0_withnan))=[];
-    twithoutnan=t(1:undersample:end);twithoutnan(isnan(f0_withnan))=[];
+    twithoutnan=t(1:undersample:end); twithoutnan=twithoutnan(1:length(f0_withnan));
+    twithoutnan(isnan(f0_withnan))=[];
     
     clear t f0_withnan
     
