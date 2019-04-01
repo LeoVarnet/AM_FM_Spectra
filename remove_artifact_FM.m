@@ -34,6 +34,8 @@ end
 
 % supress implausible values
 FM_withnan(FM_withnan<minf | FM_withnan>maxf )=NaN;
+med = nanmedian(FM_withnan);
+FM_withnan(FM_withnan<0.4*med | FM_withnan>2.5*med )=NaN;
 
 % [n,x]=hist(FM_withnan,50);
 % n = n(2:end-1); x = x(2:end-1);

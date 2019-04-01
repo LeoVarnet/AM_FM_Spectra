@@ -34,8 +34,11 @@ if nargout>1
         TFS(k,:) = unwrap(angle(hilbert_responses(k,:)));
         FM(k,:) = (1/(2*pi))*gradient(TFS(k,:),t);
     end
+end
+
+for k=1:nbch,
     if thres>0
-        FM(AM<thres)=NaN;
+        FM(k,AM(k,:)<thres)=NaN;
     end
 end
 

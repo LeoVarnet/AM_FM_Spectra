@@ -69,11 +69,11 @@ for i_wav=1:N_wav
     Nsamples = length(son);
     t=(1:Nsamples)/fs;
     
-    %% data_wav
-    
-    group{i_wav} = NameWav{i_wav}(1:2);
-    subject_ID(i_wav) = str2num(NameWav{i_wav}(3:4));
-    duration(i_wav) = t(end);
+%     %% data_wav
+%     
+%     group{i_wav} = NameWav{i_wav}(1:2);
+%     subject_ID(i_wav) = str2num(NameWav{i_wav}(3:4));
+%     duration(i_wav) = t(end);
     
     %% gammatone filtering
     
@@ -179,24 +179,58 @@ for i_wav=1:N_wav
     f0_spectrum(:,i_wav) = interpmean( f_periodo, f0_P, f_spectra_intervals );
     
     clear f0withoutnan twithoutnan f0_P f_periodo
+    
 end
 
-%% plotting
+%% Plotting (spectra averaged across cochlear channels)
+
+clear FM_spectrum_normal
+bandwidth = diff(fc); bandwidth = [bandwidth bandwidth(end)];
+for i=1:length(fc)
+    FM_spectrum_normal(i,:,:) = FM_spectrum(i,:,:)/bandwidth(i);
+end
 
 figure
 
 subplot(4,1,1)
 semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(E_spectrum,1),3))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('AM spectra')
+ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('AM spectra'); xlim(flim_spectra)
 
 subplot(4,1,2)
 semilogx(f_oct, 10*log10(squeeze(nanmean(nanmean(m_spectrum,1),3))));hold on
-ylabel('modulation index'); xlabel('rate (Hz)'); title('modulation index spectra')
+ylabel('modulation index'); xlabel('rate (Hz)'); title('modulation index spectra'); xlim(flim_Eoct)
 
 subplot(4,1,3)
-semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(FM_spectrum,1),3))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('FM spectra')
+semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(FM_spectrum_normal,1),3))));hold on
+ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(flim_spectra)
 
 subplot(4,1,4)
 semilogx(f_spectra, 10*log10(squeeze(nanmean(f0_spectrum,2))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('f0 modulation spectra')
+ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('f0 modulation spectra'); xlim(flim_spectra)
+
+%% plotting (3-D spectra - not averaged across gammatone channels)
+
+clear FM_spectrum_normal
+bandwidth = diff(fc); bandwidth = [bandwidth bandwidth(end)];
+for i=1:length(fc)
+    FM_spectrum_normal(i,:,:) = FM_spectrum(i,:,:)/bandwidth(i);
+end
+
+figure
+
+xminmax = [0.8 100];
+subplot(2,2,1)
+h=pcolor(f_spectra, fc, 10*log10(nanmean(E_spectrum,3))); caxis([-30 -10]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');%caxis([-30 -10]);
+ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('AM spectra'); xlim(xminmax)
+
+subplot(2,2,2)
+h=pcolor(f_oct, fc, 10*log10(nanmean(m_spectrum,3))); caxis([-15 0]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');%caxis([-15 0]);
+ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('modulation index spectra'); xlim(xminmax)
+
+subplot(2,2,3)
+h=pcolor(f_spectra, fc, 10*log10(nanmean(FM_spectrum,3))); caxis([0 20]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
+ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(xminmax)
+
+subplot(2,2,4)
+h=pcolor(f_spectra, fc, 10*log10(nanmean(FM_spectrum_normal,3))); caxis([-20 -5]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
+ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FMn spectra'); xlim(xminmax)
