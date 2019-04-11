@@ -24,7 +24,7 @@
 % [4] YIN, a fundamental frequency estimator for speech and music. de
 % Cheveigné A, Kawahara H. J Acoust Soc Am. 2002 Apr;111(4):1917-30.
 %
-% Leo Varnet - 2017
+% Leo Varnet - 2017 (last modified 2019)
 
 close all
 clear all
@@ -32,11 +32,21 @@ clear all
 D = dir('*.wav'); % name of the audiofile (or group of audiofiles) to be processed
 
 flim_gammabank = [70 6700]; % gammatone range (Hz)
-flim_spectra = [0.1 500]; % modulation rate range for the AMa, FM and f0M spectra (Hz)
-flim_Eoct = [0.1 500]; % modulation rate range for the AMi spectrum (Hz)
-NthOct = 3; % width of modulation filters for the AMi spectrum (1/X octave filters) - determines the resolution of the AMi spectrum
-N_fsamples = 250; % number of (log-spaced) frequency samples for the AMa, FM and f0M spectra
+flim_spectra = [0.5 200]; % modulation rate range for the AMa, FM and f0M spectra (Hz)
+flim_Eoct = [0.5 200]; % modulation rate range for the AMi spectrum (Hz)
+NthOct = 9; % width of modulation filters for the AMi spectrum (1/X octave filters) - determines the resolution of the AMi spectrum
+N_fsamples = 200; % number of (log-spaced) frequency samples for the AMa, FM and f0M spectra
 undersample = 10; % undersampling for speeding up FM and f0M calculations
+
+% Parameters for the YIN algorithm
+ap0_thres = 0.8;
+yin_thresh = 0.05;%0.2;%
+
+% Parameters for f0 extraction artifact removing
+maxjump = 10;
+minduration = 0.02;
+minf = 60;
+maxf = 550;
 
 N_wav = length(D);
 fc = ERBlinspace( flim_gammabank(1), flim_gammabank(end), 1 );
@@ -69,11 +79,11 @@ for i_wav=1:N_wav
     Nsamples = length(son);
     t=(1:Nsamples)/fs;
     
-%     %% data_wav
-%     
-%     group{i_wav} = NameWav{i_wav}(1:2);
-%     subject_ID(i_wav) = str2num(NameWav{i_wav}(3:4));
-%     duration(i_wav) = t(end);
+    %% data_wav
+    
+    group{i_wav} = NameWav{i_wav}(1:2);
+    subject_ID(i_wav) = str2num(NameWav{i_wav}(3:4));
+    duration(i_wav) = t(end);
     
     %% gammatone filtering
     
@@ -120,57 +130,51 @@ for i_wav=1:N_wav
      
     %% FM spectra
     
-    fprintf('calculating FM spectra\n');
-    
-    for ichan=1:Nchan
-        clear f_periodo FM_P
-        FMwithoutnan=FM(ichan,1:undersample:end);FMwithoutnan(isnan(FMwithoutnan))=[];
-        twithoutnan=t(1:undersample:end);twithoutnan(isnan(FM(ichan,1:undersample:end)))=[];
-        if length(FMwithoutnan)<100
-            FM_spectrum(ichan,:,i_wav) = nan(1,N_fsamples,1);
-        else
-            [FM_P,f_periodo] = plomb(FMwithoutnan,twithoutnan,100,16); 
-            FM_P = sqrt(FM_P);
-            %[FM_P,f_periodo] = fastlomb(FMwithoutnan,twithoutnan,0,1,20); FM_P=sqrt(FM_P/length(twithoutnan));%
-            FM_spectrum(ichan,:,i_wav) = interpmean( f_periodo, FM_P, f_spectra_intervals );
-            clear FMwithoutnan twithoutnan f_periodo FM_P
-        end
-    end
-    
-    clear FM
+%     fprintf('calculating FM spectra\n');
+%     
+%     for ichan=1:Nchan
+%         clear f_periodo FM_P
+%         FMwithoutnan=FM(ichan,1:undersample:end);FMwithoutnan(isnan(FMwithoutnan))=[];
+%         twithoutnan=t(1:undersample:end);twithoutnan(isnan(FM(ichan,1:undersample:end)))=[];
+%         if length(FMwithoutnan)<100
+%             FM_spectrum(ichan,:,i_wav) = nan(1,N_fsamples,1);
+%         else
+%             [FM_P,f_periodo] = plomb(FMwithoutnan,twithoutnan,100,16); 
+%             FM_P = sqrt(FM_P);
+%             %[FM_P,f_periodo] = fastlomb(FMwithoutnan,twithoutnan,0,1,20); FM_P=sqrt(FM_P/length(twithoutnan));%
+%             FM_spectrum(ichan,:,i_wav) = interpmean( f_periodo, FM_P, f_spectra_intervals );
+%             clear FMwithoutnan twithoutnan f_periodo FM_P
+%         end
+%     end
+%     
+%     clear FM
     
     %% f0 extraction
     
     fprintf('f0 extraction\n');
     
-    % Parameters for the YIN algorithm
-    ap0_thres = 0.6;
     P=[]; P.hop = undersample;P.sr = fs;
-    
-    % Parameters for artifact removing in the f0 trajectory
-    maxjump = 10;
-    minduration = 0.02;
-    minf = 60;
-    maxf = 550;
-    
+    P.minf0 = minf; P.maxf0 = maxf; P.thresh = yin_thresh;
+
     R = yin(son(:), P);%R = yin(son(1:undersample:end), P);
     f0 = 440*2.^(R.f0);
     f0_withnan = f0; 
-    f0_withnan(R.ap0>ap0_thres)=NaN;
+    f0_withnan(R.ap0>ap0_thres) = NaN;
     
-    f0_withnan = remove_artifact_FM( f0_withnan, fs/undersample, maxjump, minduration, minf, maxf );
-    
+    f0_withnan = remove_artifacts_FM( f0_withnan, fs/undersample, maxjump, minduration, [minf maxf], [0.4 2.5], 1500, 'no' );
+    f0_withnan_norm = f0_withnan/sqrt(nanmean(f0_withnan.^2));
+     
     clear P R f0
     
     %% f0 modulation spectrum
     
     fprintf('calculating f0 modulation spectrum\n');
     
-    f0withoutnan=f0_withnan;f0withoutnan(isnan(f0_withnan))=[];
-    twithoutnan=t(1:undersample:end); twithoutnan=twithoutnan(1:length(f0_withnan));
+    f0withoutnan = f0_withnan;f0withoutnan(isnan(f0_withnan))=[];
+    twithoutnan = t(1:undersample:end); twithoutnan=twithoutnan(1:length(f0_withnan));
     twithoutnan(isnan(f0_withnan))=[];
     
-    clear t f0_withnan
+    %clear t f0_withnan
     
     %[f0_P,f_periodo] = fastlomb(f0withoutnan,twithoutnan,0,1,20); f0_P = sqrt(f0_P/length(twithoutnan));
     [f0_P,f_periodo] = plomb(f0withoutnan,twithoutnan,100,16); 
@@ -178,17 +182,28 @@ for i_wav=1:N_wav
     
     f0_spectrum(:,i_wav) = interpmean( f_periodo, f0_P, f_spectra_intervals );
     
-    clear f0withoutnan twithoutnan f0_P f_periodo
+    f0withoutnan_norm = f0_withnan_norm; f0withoutnan_norm(isnan(f0_withnan_norm))=[];
+    twithoutnan_norm = t(1:undersample:end); twithoutnan_norm=twithoutnan_norm(1:length(f0_withnan_norm));
+    twithoutnan_norm(isnan(f0_withnan_norm))=[];
     
+    clear t f0_withnan
+    
+    %[f0_P,f_periodo] = fastlomb(f0withoutnan,twithoutnan,0,1,20); f0_P = sqrt(f0_P/length(twithoutnan));
+    [f0_P_norm,f_periodo] = plomb(f0withoutnan_norm,twithoutnan_norm,100,16); 
+    f0_P_norm = sqrt(f0_P_norm);
+    
+    f0_spectrum_norm(:,i_wav) = interpmean( f_periodo, f0_P_norm, f_spectra_intervals );
+    
+    clear f0withoutnan twithoutnan f0_P f_periodo f0withoutnan_norm twithoutnan_norm f0_P_norm f_periodo
 end
 
 %% Plotting (spectra averaged across cochlear channels)
-
-clear FM_spectrum_normal
-bandwidth = diff(fc); bandwidth = [bandwidth bandwidth(end)];
-for i=1:length(fc)
-    FM_spectrum_normal(i,:,:) = FM_spectrum(i,:,:)/bandwidth(i);
-end
+% 
+% clear FM_spectrum_norm
+% bandwidth = diff(fc); bandwidth = [bandwidth bandwidth(end)];
+% for i=1:length(fc)
+%     FM_spectrum_norm(i,:,:) = FM_spectrum(i,:,:)/bandwidth(i);
+% end
 
 figure
 
@@ -201,11 +216,11 @@ semilogx(f_oct, 10*log10(squeeze(nanmean(nanmean(m_spectrum,1),3))));hold on
 ylabel('modulation index'); xlabel('rate (Hz)'); title('modulation index spectra'); xlim(flim_Eoct)
 
 subplot(4,1,3)
-semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(FM_spectrum_normal,1),3))));hold on
+semilogx(f_spectra, 10*log10(squeeze(nanmean(nanmean(FM_spectrum,1),3))));hold on
 ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(flim_spectra)
 
 subplot(4,1,4)
-semilogx(f_spectra, 10*log10(squeeze(nanmean(f0_spectrum,2))));hold on
+semilogx(f_spectra, 10*log10(squeeze(nanmean(f0_spectrum_norm,2))));hold on
 ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('f0 modulation spectra'); xlim(flim_spectra)
 
 %% plotting (3-D spectra - not averaged across gammatone channels)
@@ -234,3 +249,8 @@ ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(xminmax
 subplot(2,2,4)
 h=pcolor(f_spectra, fc, 10*log10(nanmean(FM_spectrum_normal,3))); caxis([-20 -5]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
 ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FMn spectra'); xlim(xminmax)
+
+%%
+
+save('Mspectra.mat', 'E_spectrum', 'm_spectrum', 'f_oct', 'f_spectra', 'fc', 'FM_spectrum', 'f0_spectrum', 'f0_spectrum_norm')
+save('data_wav.mat', 'NameWav', 'duration', 'group', 'rms', 'subject_ID')

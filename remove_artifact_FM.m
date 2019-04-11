@@ -1,4 +1,4 @@
-function [ FM_withnan ] = remove_artifact_FM( FM_withnan, fs, maxjump, minduration, minf, maxf )
+function [ FM_withnan ] = remove_artifacts_FM( FM_withnan, fs, maxjump, minduration, minf, maxf )
 %REMOVE_ARTIFACT_FM Remove the artifacts from f0 of FM trajectories. 
 % Use as [ f0_no_artifacts ] = remove_artifact_FM( f0, fs, maxjump, minduration, minf, maxf )
 %   maxjump : maximum gap in frequency between two samples
@@ -8,6 +8,8 @@ function [ FM_withnan ] = remove_artifact_FM( FM_withnan, fs, maxjump, mindurati
 %              - supress segments shorter than minduration
 %              - supress extreme values (< minf or > maxf)
 %              - supress values outside of the "global range" of the sound
+% 
+% 
 
 % suppress jumps between consecutive samples larger than maxjump
 derivef0=diff(FM_withnan);
