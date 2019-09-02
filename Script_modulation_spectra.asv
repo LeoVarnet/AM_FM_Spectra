@@ -232,11 +232,9 @@ h=pcolor(f_oct, fc, 20*log10(nanmean(m_spectrum,3))); caxis([-15 0]); set(h, 'Ed
 ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('modulation index spectra'); xlim(xminmax)
 
 subplot(2,2,3)
-h=pcolor(f_spectra, fc, 20*log10(nanmean(FM_spectrum,3))); %caxis([0 20]); 
-set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
+h=pcolor(f_spectra, fc, 20*log10(nanmean(FM_spectrum,3))); caxis([0 20]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
 ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(xminmax)
 
 subplot(2,2,4)
-h=pcolor(f_spectra, fc, 20*log10(nanmean(FM_spectrum_norm,3))); %caxis([-20 -5]); 
-set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
+h=pcolor(f_spectra, fc, 20*log10(nanmean(FM_spectrum_norm,3))); caxis([-20 -5]); set(h, 'EdgeColor', 'none'); hold on ;set(gca, 'XScale', 'log', 'YScale', 'log');
 ylabel('frequency (Hz)'); xlabel('rate (Hz)'); title('FMn spectra'); xlim(xminmax)

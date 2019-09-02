@@ -9,9 +9,8 @@ function [ FM_withnan ] = remove_artifacts_FM( FM_withnan, fs, maxjump, mindurat
 %              - supress segments shorter than minduration
 %              - supress extreme values (< minf or > maxf)
 %
-% The new version of the function (old version : 'remove_artifact_FM')
-% includes several additional modules, corresponding to optional
-% parameters:
+% The new version of the function includes several additional modules,
+% corresponding to optional parameters:
 % [ FM_no_artifacts ] = remove_artifact_FM( __ , frange_median, var_thres, plot_step ) 
 %    frange_median: limits of credible pitch range, relative to the median (= [minf_median maxf_median])
 %    var_thres: removal of fricative with a threshold of (average) variability of FM
