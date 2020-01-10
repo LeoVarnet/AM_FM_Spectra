@@ -32,10 +32,10 @@
 %
 % Leo Varnet - 2017 (last modified 2019)
 
-%close all
+close all
 clear all
 
-D = dir('*.wav'); % name of the audiofile (or group of audiofiles) to be processed
+D = dir('*\*.wav'); % name of the audiofile (or group of audiofiles) to be processed
 
 flim_gammabank = [70 6700]; % gammatone range (Hz)
 flim_spectra = [0.5 200]; % modulation rate range for the AMa, FM and f0M spectra (Hz)
@@ -79,14 +79,14 @@ for i_wav=1:N_wav
     %% loading sound
     
     fprintf('sound loading\n');
-    NameWav{i_wav} = D(i_wav).name;
+    NameWav{i_wav} = [D(i_wav).folder '\' D(i_wav).name];
     [son, fs] = audioread(NameWav{i_wav});
     %[son,fs] = wavread(NameWav);
     rms(i_wav) = sqrt(mean(son.^2));
     son = son/rms(i_wav);
     Nsamples = length(son);
     t=(1:Nsamples)/fs;
-    
+
     %% gammatone filtering
     
     [gamma_responses, ~, fc, f_bw] = gammatone_filtering( son, flim_gammabank(1), flim_gammabank(end), 1, [], fs);
@@ -204,7 +204,7 @@ figure
 
 subplot(4,1,1)
 semilogx(f_spectra, 20*log10(squeeze(nanmean(nanmean(E_spectrum,1),3))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('AM spectra'); xlim(flim_spectra)
+ylabel('amplitude (dB re: 1 SD)'); xlabel('rate (Hz)'); title('AM spectra'); xlim(flim_spectra)
 
 subplot(4,1,2)
 semilogx(f_oct, 20*log10(squeeze(nanmean(nanmean(m_spectrum,1),3))));hold on
@@ -212,11 +212,11 @@ ylabel('modulation index'); xlabel('rate (Hz)'); title('modulation index spectra
 
 subplot(4,1,3)
 semilogx(f_spectra, 20*log10(squeeze(nanmean(nanmean(FM_spectrum,1),3))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(flim_spectra)
+ylabel('amplitude (dB re: 1 Hz)'); xlabel('rate (Hz)'); title('FM spectra'); xlim(flim_spectra)
 
 subplot(4,1,4)
 semilogx(f_spectra, 20*log10(squeeze(nanmean(f0_spectrum_norm,2))));hold on
-ylabel('amplitude (dB)'); xlabel('rate (Hz)'); title('f0 modulation spectra'); xlim(flim_spectra)
+ylabel('amplitude (dB re: 1 SD)'); xlabel('rate (Hz)'); title('f0 modulation spectra'); xlim(flim_spectra)
 
 %% plotting (3-D spectra - not averaged across gammatone channels)
 
