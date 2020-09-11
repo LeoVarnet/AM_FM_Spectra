@@ -80,8 +80,7 @@ for i_wav=1:N_wav
     
     fprintf('sound loading\n');
     NameWav{i_wav} = [D(i_wav).folder '\' D(i_wav).name];
-    [son, fs] = audioread(NameWav{i_wav});
-    %[son,fs] = wavread(NameWav);
+    [son, fs] = audioread(NameWav{i_wav}); % monochannel sound
     rms(i_wav) = sqrt(mean(son.^2));
     son = son/rms(i_wav);
     Nsamples = length(son);

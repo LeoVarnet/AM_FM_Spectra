@@ -4,8 +4,7 @@ function [ AM, FM ] = hilbert_extraction( D, fs, varargin )
 %   transform. thres is an optional argument for artifact rejection
 %   (consider FM only in regions where AM>thres). 
 %
-% Leo Varnet 2016 - last modified 11/10/2018
-
+% Leo Varnet 2016 - last modified 02/03/2020
 nbch = size(D,1);
 if length(varargin)==0
     thres = 0;
@@ -18,7 +17,8 @@ end
 t=(1:length(D))/fs;
 
 if isreal(D)
-    hilbert_responses = hilbert(D);
+     hilbert_responses = hilbert(D')';
+%hilbert_responses = hilbert(D);
 else
     hilbert_responses = D;
 end
@@ -31,8 +31,8 @@ end
 if nargout>1
     % FM extraction
     for k=1:nbch
-        TFS(k,:) = unwrap(angle(hilbert_responses(k,:)));
-        FM(k,:) = (1/(2*pi))*gradient(TFS(k,:),t);
+        TFS(k,:) = unwrap(angle(hilbert_responses(k,:))');
+        FM(k,:) = abs((1/(2*pi))*gradient(TFS(k,:),t));
     end
 end
 
